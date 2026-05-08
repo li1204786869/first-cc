@@ -1,0 +1,140 @@
+/* 页面整体 */
+body {
+  font-family: "Microsoft YaHei", "SimSun", "PingFang SC", sans-serif;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #333;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 30px;
+}
+
+/* 头部布局：信息居左 + 照片居右 */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #2b5797;
+}
+
+.header-info {
+  flex: 1;
+}
+
+.header-photo {
+  flex-shrink: 0;
+  padding-left: 24px;
+}
+
+.header-photo img {
+  width: 130px;
+  height: 165px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+}
+
+/* 标题 */
+h1 {
+  font-size: 26px;
+  margin-bottom: 2px;
+  letter-spacing: 6px;
+}
+
+/* 副标题 */
+h1 + p {
+  font-size: 14px;
+  color: #555;
+  margin-top: 0;
+  margin-bottom: 6px;
+}
+
+h1 + p + hr {
+  margin-top: 0;
+}
+
+/* 各级标题 */
+h2 {
+  font-size: 16px;
+  border-bottom: 2px solid #2b5797;
+  padding-bottom: 4px;
+  margin-top: 22px;
+  margin-bottom: 10px;
+  color: #2b5797;
+  letter-spacing: 2px;
+}
+
+h3 {
+  font-size: 14px;
+  margin-top: 14px;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+/* 水平线 */
+hr {
+  border: none;
+  border-top: 1px solid #999;
+  margin: 10px 0 14px 0;
+}
+
+/* 段落 */
+p {
+  margin: 4px 0;
+}
+
+/* 引用块 (求职意向) */
+blockquote {
+  border-left: 3px solid #2b5797;
+  background: #f5f7fa;
+  margin: 18px 0 0 0;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #2b5797;
+  font-weight: bold;
+}
+
+/* 表格 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13.5px;
+}
+
+table th {
+  background: #e8ecf1;
+  font-weight: bold;
+  text-align: center;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  width: 100px;
+  white-space: nowrap;
+}
+
+table td {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+}
+
+/* 列表 */
+ul, ol {
+  margin: 4px 0;
+  padding-left: 22px;
+}
+
+li {
+  margin: 2px 0;
+}
+
+/* 强调 */
+strong {
+  color: #1a3a5c;
+}
+
+/* 技能表中加粗 */
+table strong {
+  color: #333;
+}
