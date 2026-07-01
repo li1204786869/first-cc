@@ -4,146 +4,154 @@ from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-# --- Read source files ---
 base = 'd:/cc 内容/新建文件夹/manuscript'
 
 with open(os.path.join(base, 'sections/introduction.tex'), 'r', encoding='utf-8') as f:
-    intro_tex = f.read()
+    intro = f.read()
 with open(os.path.join(base, 'sections/results_discussion.tex'), 'r', encoding='utf-8') as f:
-    rd_tex = f.read()
+    rd = f.read()
+with open(os.path.join(base, 'sections/methods.tex'), 'r', encoding='utf-8') as f:
+    methods = f.read()
 with open(os.path.join(base, 'references.bib'), 'r', encoding='utf-8') as f:
-    ref_text = f.read()
+    refs = f.read()
 
-def latex_to_text(tex):
-    """Strip LaTeX commands, keep readable text."""
-    # Remove \section{}, \subsection{} — keep title text
-    tex = re.sub(r'\\section\{([^}]*)\}', r'\1', tex)
-    tex = re.sub(r'\\subsection\{([^}]*)\}', r'\1', tex)
-    # Remove \cite{...}
-    tex = re.sub(r'\\cite\{[^}]*\}', '', tex)
-    # Remove math mode delimiters
-    tex = tex.replace('$', '')
-    # Remove LaTeX specials
-    tex = tex.replace('~', ' ')
-    tex = tex.replace('{', '')
-    tex = tex.replace('}', '')
-    tex = tex.replace('\\#', '#')
-    tex = tex.replace('\\cdot', '·')
-    tex = tex.replace('\\degree', '°')
-    tex = tex.replace('\\textsubscript', '')
-    # Remove leftover backslashes
-    tex = re.sub(r'\\[a-zA-Z]+', '', tex)
-    # Clean up extra spaces
-    tex = re.sub(r'  +', ' ', tex)
-    tex = re.sub(r'\n\s*\n', '\n\n', tex)
-    return tex.strip()
+def clean_tex(text):
+    """Strip LaTeX commands to readable text."""
+    # Save math for later restoration
+    text = re.sub(r'\$([^$]+)\$', r' \1 ', text)
+    # Remove section commands but keep title text
+    text = re.sub(r'\\section\{([^}]*)\}', r'\n[SECTION]\n\1\n', text)
+    text = re.sub(r'\\subsection\{([^}]*)\}', r'\n[SUBSECTION]\n\1\n', text)
+    # Remove cite
+    text = re.sub(r'\\cite\{[^}]*\}', '', text)
+    # Remove other LaTeX
+    text = text.replace('{', '').replace('}', '').replace('~', ' ')
+    text = text.replace('\\#', '#')
+    text = text.replace('\\cdot', '·')
+    text = text.replace('\\degree', '°')
+    text = text.replace('\\%', '%')
+    text = re.sub(r'\\[a-zA-Z]+', '', text)
+    text = re.sub(r'  +', ' ', text)
+    return text.strip()
 
-# --- Create document ---
+def write_paragraphs(doc, text, section_titles_to_skip=None):
+    """Split text by blank lines and add as paragraphs, skipping known headings."""
+    if section_titles_to_skip is None:
+        section_titles_to_skip = set()
+
+    blocks = [b.strip() for b in re.split(r'\n\s*\n', text) if b.strip()]
+
+    for block in blocks:
+        # Check if this is a section/subsection marker
+        is_section = block.startswith('[SECTION]')
+        is_subsection = block.startswith('[SUBSECTION]')
+
+        if is_section or is_subsection:
+            title = block.split('\n', 1)[1].strip() if '\n' in block else block.replace('[SECTION]', '').replace('[SUBSECTION]', '').strip()
+            if title in section_titles_to_skip:
+                continue
+            p = doc.add_paragraph()
+            r = p.add_run(title)
+            r.bold = True
+            r.font.size = Pt(13) if is_section else Pt(12)
+            r.font.name = 'Times New Roman'
+        else:
+            if len(block) < 5:
+                continue
+            p = doc.add_paragraph()
+            p.paragraph_format.first_line_indent = Inches(0.3)
+            p.paragraph_format.space_after = Pt(6)
+            p.paragraph_format.line_spacing = 1.5
+            r = p.add_run(block)
+            r.font.size = Pt(11)
+            r.font.name = 'Times New Roman'
+
 doc = Document()
-
-# Style setup
 style = doc.styles['Normal']
-font = style.font
-font.name = 'Times New Roman'
-font.size = Pt(11)
+style.font.name = 'Times New Roman'
+style.font.size = Pt(11)
 
 # === TITLE ===
 title = doc.add_paragraph()
 title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = title.add_run('Bi/MXene Composite Anode with Sandwich Architecture for\nSimultaneously High-Rate and Stable Sodium-Ion Storage')
-run.bold = True
-run.font.size = Pt(15)
-run.font.name = 'Times New Roman'
+r = title.add_run('Bi/MXene Composite Anode with Sandwich Architecture for\nSimultaneously High-Rate and Stable Sodium-Ion Storage')
+r.bold = True
+r.font.size = Pt(15)
+r.font.name = 'Times New Roman'
 
-# Authors placeholder
 author = doc.add_paragraph()
 author.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = author.add_run('[Authors and Affiliations — to be added]')
-run.font.size = Pt(10)
-run.font.color.rgb = RGBColor(150, 150, 150)
-run.font.name = 'Times New Roman'
+r = author.add_run('[Authors and Affiliations — to be added]')
+r.font.size = Pt(10)
+r.font.color.rgb = RGBColor(150, 150, 150)
+r.font.name = 'Times New Roman'
 
 # === ABSTRACT ===
 doc.add_paragraph()
 abs_h = doc.add_paragraph()
-run = abs_h.add_run('Abstract')
-run.bold = True
-run.font.size = Pt(13)
-run.font.name = 'Times New Roman'
+r = abs_h.add_run('Abstract')
+r.bold = True
+r.font.size = Pt(13)
+r.font.name = 'Times New Roman'
 
-abs_p = doc.add_paragraph('[To be written after completing the full manuscript]')
+abs_text = (
+    "Addressing the challenge of structural collapse caused by volume expansion in alloy-type anodes "
+    "for sodium-ion batteries, this study proposes a universal strategy based on constructing a "
+    "nanoconfined system using two-dimensional MXene, achieving atomic-level encapsulation of Bi "
+    "nanoparticles between MXene interlayers and forming a robust \"sandwich\" confined structure. "
+    "Multi-scale characterization confirms that this architecture utilizes the mechanical strength of "
+    "MXene for physical confinement, combined with covalent Ti–O–Bi bonds for chemical anchoring, "
+    "fundamentally suppressing particle pulverization of Bi over ultra-long cycling. The resulting "
+    "composite electrode exhibits exceptional structural stability, withstanding 5,000 cycles at "
+    "2 A g⁻¹ without significant capacity decay, and demonstrates outstanding rate response "
+    "(up to 20 A g⁻¹). EIS and GITT analyses reveal a strong synergistic effect between the "
+    "MXene conductive network and the shortened diffusion pathways arising from Bi nanoscaling, "
+    "greatly enhancing charge-transfer kinetics. This work demonstrates the immense potential of "
+    "the \"physical confinement–chemical anchoring\" synergistic mechanism in stabilizing "
+    "high-capacity alloying electrodes, providing important theoretical guidance for designing "
+    "next-generation high-energy-density, long-life sodium-ion batteries."
+)
+
+abs_p = doc.add_paragraph()
 abs_p.paragraph_format.first_line_indent = Inches(0.3)
+abs_p.paragraph_format.line_spacing = 1.5
+r = abs_p.add_run(abs_text)
+r.font.size = Pt(11)
+r.font.name = 'Times New Roman'
 
 # === INTRODUCTION ===
 doc.add_paragraph()
-intro_h = doc.add_paragraph()
-run = intro_h.add_run('1. Introduction')
-run.bold = True
-run.font.size = Pt(13)
-run.font.name = 'Times New Roman'
-
-intro_text = latex_to_text(intro_tex)
-for p in intro_text.split('\n\n'):
-    p = p.strip()
-    if not p or p == 'Introduction':
-        continue
-    para = doc.add_paragraph()
-    para.paragraph_format.first_line_indent = Inches(0.3)
-    para.paragraph_format.space_after = Pt(6)
-    para.paragraph_format.line_spacing = 1.5
-    run = para.add_run(p)
-    run.font.size = Pt(11)
-    run.font.name = 'Times New Roman'
+intro_text = clean_tex(intro)
+write_paragraphs(doc, intro_text, section_titles_to_skip={'Introduction', '引言'})
 
 # === RESULTS & DISCUSSION ===
 doc.add_paragraph()
-rd_h = doc.add_paragraph()
-run = rd_h.add_run('2. Results and Discussion')
-run.bold = True
-run.font.size = Pt(13)
-run.font.name = 'Times New Roman'
+rd_text = clean_tex(rd)
+write_paragraphs(doc, rd_text, section_titles_to_skip={'Results and Discussion', '结果与讨论', 'Conclusion', '结论'})
 
-sub_h = doc.add_paragraph()
-run = sub_h.add_run('2.1 Synthesis and Structural Characterization of Bi/MXene Composite')
-run.bold = True
-run.font.size = Pt(12)
-run.font.name = 'Times New Roman'
-
-rd_text = latex_to_text(rd_tex)
-for p in rd_text.split('\n\n'):
-    p = p.strip()
-    if not p:
-        continue
-    # Skip section headings already handled
-    if p in ('Results and Discussion', 'Synthesis and Structural Characterization of Bi/MXene Composite'):
-        continue
-    para = doc.add_paragraph()
-    para.paragraph_format.first_line_indent = Inches(0.3)
-    para.paragraph_format.space_after = Pt(6)
-    para.paragraph_format.line_spacing = 1.5
-    run = para.add_run(p)
-    run.font.size = Pt(11)
-    run.font.name = 'Times New Roman'
+# === METHODS ===
+doc.add_paragraph()
+methods_text = clean_tex(methods)
+write_paragraphs(doc, methods_text, section_titles_to_skip={'Experimental Section', '实验部分'})
 
 # === REFERENCES ===
 doc.add_paragraph()
 ref_h = doc.add_paragraph()
-run = ref_h.add_run('References')
-run.bold = True
-run.font.size = Pt(13)
-run.font.name = 'Times New Roman'
+r = ref_h.add_run('References')
+r.bold = True
+r.font.size = Pt(13)
+r.font.name = 'Times New Roman'
 
-for line in ref_text.strip().split('\n'):
+for line in refs.strip().split('\n'):
     line = line.strip()
     if line:
-        para = doc.add_paragraph()
-        para.paragraph_format.space_after = Pt(2)
-        para.paragraph_format.line_spacing = 1.15
-        run = para.add_run(line)
-        run.font.size = Pt(10)
-        run.font.name = 'Times New Roman'
+        p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(2)
+        p.paragraph_format.line_spacing = 1.15
+        r = p.add_run(line)
+        r.font.size = Pt(10)
+        r.font.name = 'Times New Roman'
 
-# === SAVE ===
 output_path = os.path.join(base, 'Bi-MXene_SIB_paper_draft.docx')
 doc.save(output_path)
 print(f'Done: {output_path}')
